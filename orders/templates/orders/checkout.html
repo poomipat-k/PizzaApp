@@ -1,0 +1,18 @@
+{% extends "orders/base.html" %}
+
+{% block title %}
+BB Pizza : Check Out
+{% endblock %}
+
+{% block body %}
+  <!-- Nav bar -->
+  <h1>Check Out: {{item_on_cart}} item(s)</h1>
+
+  <div id="content">
+  </div>
+
+  {{ data | json_script:"data" }}
+  {% load static %}
+  <script type="text/javascript" src="{% static 'js/checkout.js'%}"></script>
+
+{% endblock %}

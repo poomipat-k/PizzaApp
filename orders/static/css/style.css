@@ -1,0 +1,13 @@
+#username, #password {
+  width: 250px;
+}
+
+body {
+  background-color: lightgray;
+}
+
+.inactiveLink {
+   pointer-events: none;
+   cursor: default;
+   color: lightgray;
+}

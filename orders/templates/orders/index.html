@@ -1,0 +1,49 @@
+{% extends "orders/base.html" %}
+
+{% block title %}
+BB Pizza :
+{% endblock %}
+
+{% block body %}
+  <!-- Nav bar -->
+<h1>Menu</h1>
+<h3>Pizza</h3>
+<select id="type" name="type">
+  {% for item in menu.type %}
+    <option value="{{item}}">{{item}}</option>
+  {% endfor %}
+</select>
+
+<select id="size" name="size">
+  {% for item in menu.size %}
+    <option value="{{item}}">{{item}}</option>
+  {% endfor %}
+</select>
+
+<select id="topping_option" name="topping_option">
+  {% for item in menu.topping_option %}
+    {% if item == 0 %}
+      <option value="{{item}}">Cheese</option>
+    {% elif item == 1 %}
+        <option value="{{item}}">{{item}} topping</option>
+    {% elif item == 5 %}
+      <option value="{{item}}">Special ({{item}} toppings)</option>
+    {% else %}
+      <option value="{{item}}">{{item}} toppings</option>
+    {% endif %}
+  {% endfor %}
+</select>
+<br><br>
+<div id="topping_option_dropdown">
+</div>
+
+<br>
+<button id="pizza_cart" type="button" class="btn btn-primary">Add to cart $12.7</button>
+<hr>
+
+{{ topping_json | json_script:"topping_json" }}
+
+{% load static %}
+<script type="text/javascript" src="{% static 'js/index.js'%}"></script>
+
+{% endblock %}
