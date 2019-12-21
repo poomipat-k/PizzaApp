@@ -10,8 +10,12 @@ BB Pizza : Check Out
 
   <div id="content">
   </div>
+  <div id="total_div">
+
+  </div>
 
   {{ data | json_script:"data" }}
+  {{ total | json_script:"total" }}
   {% load static %}
   <script type="text/javascript" src="{% static 'js/checkout.js'%}"></script>
 

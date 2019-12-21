@@ -1,13 +1,15 @@
 document.addEventListener("DOMContentLoaded", function(){
   let data = JSON.parse(document.getElementById('data').textContent);
   data_json = JSON.parse(data);
+  let total = JSON.parse(document.getElementById('total').textContent);
+  total = JSON.parse(total);
   let cart = document.querySelector("#cart");
   // Hidden cart's navbar dropdown
   cart.hidden = true;
 
   let content = document.querySelector("#content");
   // Atleast one pizza cart
-  if (data_json['pizza']){
+  if (data_json){
     var html = `
     <h2>Pizza</h2>
     <table class="table">
@@ -50,5 +52,7 @@ document.addEventListener("DOMContentLoaded", function(){
     }
     html += `</table><hr>`;
   }
+  let total_div = document.querySelector("#total_div");
+  total_div.innerHTML = '<h2>$' + total + '</h2>';
   content.innerHTML = html;
 });

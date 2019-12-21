@@ -110,27 +110,38 @@ def add_pizza_to_cart(request):
 
 def clear(request):
     if request.user.is_authenticated:
-        del request.session['cart']
-        if 'cart' not in request.session:
-            return HttpResponse('success')
+        if 'cart' in request.session:
+            del request.session['cart']
+            if 'cart' not in request.session:
+                return HttpResponse('success')
+            else:
+                return HttpResponse('failure')
         else:
-            return HttpResponse('failure')
+            return HttpResponse("<h1>Error</h1><h2>No item in cart</h2>")
     else:
         raise Http404("Not logged in.")
 
 def checkout(request):
     if request.user.is_authenticated:
-        data = json.dumps(request.session['cart'])
+        try:
+            data = json.dumps(request.session['cart'])
+        except KeyError:
+            return HttpResponse("<h1>Error</h1><h2>No item in cart</h2>")
         # Count item on cart
         count = 0
+        total = 0
         try:
             for key in request.session['cart']:
                 count += len(request.session['cart'][key])
+                for item in request.session['cart'][key]:
+                    total += float(item['price'])
         except KeyError:
             pass
+
         contect = {
         'data' : data,
-        'item_on_cart' : count
+        'item_on_cart' : count,
+        'total' : round(total, 2)
         }
         return render(request, 'orders/checkout.html', contect)
     else:
@@ -152,6 +163,7 @@ def login_view(request):
         return render(request, "orders/login.html", {"message":None})
 
 def logout_view(request):
+
     logout(request)
     return render(request, "orders/login.html", {"message" : "Logged out."})
 

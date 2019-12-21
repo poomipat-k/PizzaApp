@@ -12,6 +12,11 @@ Login
         <p style="color: red">{{ message }}</p>
     </div>
 {% endif %}
+{% if cookie %}
+    <div>
+        <p style="color: red">{{ cookie }}</p>
+    </div>
+{% endif %}
 <form action="{% url 'login' %}" method="post">
     {% csrf_token %}
     <div class="form-group">

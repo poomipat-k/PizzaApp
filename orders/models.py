@@ -82,7 +82,6 @@ class Order(models.Model):
         if len(obj.all()) > 0:
             for item in obj.all():
                 this_sum += item.price
-
         return this_sum
 
     def total(self):
@@ -96,3 +95,6 @@ class Order(models.Model):
 
     def __str__(self):
         return f"""id: {self.id} - total {self.total()}"""
+
+class Cart(Order):
+    pass
