@@ -46,14 +46,14 @@ CS Pizza :
       <div id="sub_add_on_div" class="">
       </div>
       <br>
-      <div id="{{item_name|slice:'0:-4'}}_add2cart_button">
-        <button id="{{item_name}}_price" type="button" class="btn btn-primary">$ Add to Cart</button>
+      <div>
+        <button id="{{item_name}}_price" type="button" class="btn btn-primary"></button>
       </div>
     <!-- All but "SubMenu" -->
     {% else %}
     <br>
-      <div id="{{item_name|slice:'0:-4'}}_add2cart_button">
-        <button id="" type="button" class="btn btn-primary">$ Add to Cart</button>
+      <div>
+        <button id="{{item_name}}_price" type="button" class="btn btn-primary"></button>
       </div>
     {% endif %}
     <hr>

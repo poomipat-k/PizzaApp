@@ -15,10 +15,28 @@ document.addEventListener('DOMContentLoaded', function(){
     update_sub_add_on();
   });
 
+  // Disable small size option of Sub which name is
+  // Sausage,Peppers and Onions which available on large size only
+  let submenu_select = document.querySelector("#SubMenu_name");
+  submenu_select.addEventListener('change', function(){
+    if (submenu_select.value.trim() == "Sausage, Peppers and Onions"){
+      document.querySelector("#SubMenu_size").innerHTML = `<option class="" value="large">large</option>`;
+    }
+    else{
+      document.querySelector("#SubMenu_size").innerHTML = `
+      <option class="" value="large">large</option>
+      <option class="" value="small">small</option>
+      `;
+    }
+  });
+
   let all_select = document.querySelectorAll("select");
   all_select.forEach(function(select){
+    // Initialize price in button
+    get_price(select);
+    // Listen to change event then update the price in add to cart button
     select.addEventListener('change', function(){
-      let result = get_price(this);
+      get_price(this);
     });
   });
 
@@ -29,9 +47,11 @@ document.addEventListener('DOMContentLoaded', function(){
     let html = '';
     if (n > 0){
       for (let i = 0; i < n; i++){
-        html += `<div style="margin-top:3px; margin-bottom:3px;">
+        html += `
+        <div style="margin-top:3px; margin-bottom:3px;">
         <label style="color: #31a62b; position: relative; left: 44px;">Topping ${i+1}</label>
-        <select id="topping${i}" class="option_dropdown" name="topping${i}">`;
+        <select id="topping${i}" class="option_dropdown" name="topping${i}">
+        `;
         for (let cell of toppings_json){
           html += `<option value="${cell}">${cell}</option>`;
 
@@ -48,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function(){
   function update_sub_add_on(){
     let sub_add_on_div = document.querySelector("#sub_add_on_div");
     html = ``;
-    if (sub_select.value.trim() == "Steak + Cheese"){
+    if (sub_select.value.trim() == "Steak and Cheese"){
       html += `<div class="btn-group" role="group" aria-label="Basic example">`;
       for (let info of sub_add_on){
         if (info.name != "Extra Cheese"){
@@ -59,7 +79,6 @@ document.addEventListener('DOMContentLoaded', function(){
     }
     sub_add_on_div.innerHTML = html;
   }
-
   function get_price(select_button){
     // Get django models name from select_button id
     let model_name = select_button.id.split('_')[0]; // PizzaMenu
@@ -96,8 +115,8 @@ document.addEventListener('DOMContentLoaded', function(){
     url = url.slice(0,-1);
     // Callback function
     request.onload = function(){
-      alert(JSON.parse(request.responseText));
-      
+      document.querySelector("#" + model_name + '_price').innerHTML = '+$' +
+      request.responseText + ' to Cart';
     };
     request.open("GET", url);
     request.send();

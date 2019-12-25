@@ -5,6 +5,7 @@ from .forms import SignUpForm
 from django.urls import reverse
 from .models import PizzaMenu, Topping, SubMenu, SubsAddOn, PastaMenu, SaladMenu, DinnerPlatterMenu
 import json
+from urllib.parse import unquote, unquote_plus
 
 # When add class in model.py, you need to manually add data in these three variables
 # 'unrelated_att', 'menu_class', 'menu_class_str'
@@ -126,9 +127,11 @@ def get_price(request):
         filter_data = {}
         for att in attributes:
             try:
-                filter_data[att] = request.GET[att]
+                filter_data[att] = unquote_plus(request.GET[att])
             except KeyError:
                 return render(request, "orders/error.html", {'message' : f"Key Error: {att}"})
+            except IndexError:
+                return render(request, "orders/error.html", {'message' : f"IndexError list index out of range: {att}"})
         price = model.objects.filter(**filter_data)[0].price
         return HttpResponse(price)
     else:
