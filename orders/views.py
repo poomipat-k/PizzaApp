@@ -3,149 +3,68 @@ from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
 from .forms import SignUpForm
 from django.urls import reverse
-from .models import PizzaMenu, Topping
+from .models import PizzaMenu, Topping, SubMenu, SubsAddOn, PastaMenu, SaladMenu, DinnerPlatterMenu
 import json
 
+# When add class in model.py, you need to manually add data in these three variables
+# 'unrelated_att', 'menu_class', 'menu_class_str'
+# Order of menu_class and menu_class_str must identical
+unrelated_att = ['DoesNotExist', 'MultipleObjectsReturned',
+'objects', 'id', 'pizza', 'on_pizza', 'price',
+'sub', 'on_sub', 'pasta', 'salad', 'dinnerplatter']
+menu_class = [PizzaMenu, SubMenu, PastaMenu, SaladMenu, DinnerPlatterMenu]
+menu_class_str = ['PizzaMenu', 'SubMenu', 'PastaMenu', 'SaladMenu', "DinnerPlatterMenu"]
+
+def generate_menu():
+    """Return Menu, Topping, SubsAddOn"""
+    # For Menu
+    menu_data = {}
+    for index, item in enumerate(menu_class):
+        # Get in PizzaMenu class
+        if len(menu_class) != len(menu_class_str):
+            return HttpResponse("Error: menu_class and menu_class_str size not identical")
+        item_name = menu_class_str[index]
+        item_att = [att for att in item.__dict__.keys() if not att.startswith('_')
+                    and att not in unrelated_att]
+        menu_data[item_name] = {}
+        for att in item_att:
+            att_data_set = set()
+            for row in item.objects.all():
+                att_data_set.add(getattr(row, att))
+            menu_data[item_name][att] = sorted(list(att_data_set))
+        # Pizza topping variable
+        toppings = set()
+        for topping in Topping.objects.all():
+            toppings.add(topping.name)
+        toppings = sorted(list(toppings))
+        # Subs add on variable
+        sub_add_on = []
+        for item in SubsAddOn.objects.all():
+            sub_add_on.append({'name' : item.name, 'price' : item.price})
+    return menu_data, toppings, sub_add_on
+# Generate menu data
+MENU = generate_menu()
 # Create your views here.
-# Index page
 def index(request):
-    # User not logged in
-    if not request.user.is_authenticated:
-        return HttpResponseRedirect(reverse("login"))
-    # User has logged ins
-    types, topping_option, size = set(), set(), set()
-    # Fetch data from PizzaMenu
-    for item in PizzaMenu.objects.all():
-        types.add(item.type)
-        topping_option.add(item.topping_option)
-        size.add(item.size)
-    menu = {
-        'type' : sorted(tuple(types)),
-        'topping_option' : sorted(tuple(topping_option)),
-        'size' : sorted(tuple(size), reverse=True)
-        }
-    # Fetch data from Topping
-    toppings= set()
-    for item in Topping.objects.all():
-        toppings.add(item.name)
-    toppings = sorted(tuple(toppings))
-
-    # Count item on cart
-    count = 0
-    try:
-        for key in request.session['cart']:
-            count += len(request.session['cart'][key])
-    except KeyError:
-        pass
-
-    contect = {
-        "user" : request.user,
-        "menu" : menu,
-        "toppings" : toppings,
-        "topping_json" : json.dumps(toppings),
-        "item_on_cart" : count
-    }
-    return render(request, "orders/index.html", contect)
-
-def get_pizza_price(request):
     if request.user.is_authenticated:
-        if request.method == "POST":
-            raise Http404("Wrong request method")
-        types = request.GET['t']
-        size = request.GET['s']
-        topping_option = request.GET['topping']
-        price = PizzaMenu.objects.filter(type=types, size=size, topping_option=topping_option)[0].price
-        return HttpResponse(price)
-    else:
-        raise Http404("Not logged in.")
-
-def add_pizza_to_cart(request):
-    if request.user.is_authenticated:
-        if request.method == "POST":
-            raise Http404("Wrong request method")
-        # Create a new session key called 'cart'
-        types = request.GET['types']
-        size = request.GET['size']
-        topping_option = request.GET['topping_option']
-        price = request.GET['price']
-        toppings = []
-        for i in range(int(topping_option)):
-            this_topping = 'topping' + str(i+1)
-            toppings.append(request.GET[this_topping])
-
-        # No keyword cart in session
-        if 'cart' not in request.session:
-            request.session['cart'] = {}
-            request.session['cart']['pizza'] = []
-            request.session['cart']['pizza'].append({
-            'types' : types,
-            'size' : size,
-            'topping_option' : topping_option,
-            'toppings' : toppings,
-            'price' : price
-            })
-            request.session.modified = True
-            count = 0
-            for key in request.session['cart']:
-                count += len(request.session['cart'][key])
-            return HttpResponse(count)
-        # There is/are items in the cart already
-        else:
-            count = 0
-            if len(request.session['cart']['pizza']) > 0:
-                request.session['cart']['pizza'].append({
-                'types' : types,
-                'size' : size,
-                'topping_option' : topping_option,
-                'toppings' : toppings,
-                'price' : price
-                })
-                request.session.modified = True
-            for key in request.session['cart']:
-                count += len(request.session['cart'][key])
-            return HttpResponse(count)
-    # Not logged in raise error
-    else:
-        raise Http404("Not logged in.")
-
-def clear(request):
-    if request.user.is_authenticated:
-        if 'cart' in request.session:
-            del request.session['cart']
-            if 'cart' not in request.session:
-                return HttpResponse('success')
-            else:
-                return HttpResponse('failure')
-        else:
-            return HttpResponse("<h1>Error</h1><h2>No item in cart</h2>")
-    else:
-        raise Http404("Not logged in.")
-
-def checkout(request):
-    if request.user.is_authenticated:
-        try:
-            data = json.dumps(request.session['cart'])
-        except KeyError:
-            return HttpResponse("<h1>Error</h1><h2>No item in cart</h2>")
-        # Count item on cart
-        count = 0
-        total = 0
-        try:
-            for key in request.session['cart']:
-                count += len(request.session['cart'][key])
-                for item in request.session['cart'][key]:
-                    total += float(item['price'])
-        except KeyError:
-            pass
-
+        menu = MENU[0]
+        toppings = MENU[1]
+        sub_add_on = MENU[2]
+        # Store all info in contect, prepare to pass to html page
         contect = {
-        'data' : data,
-        'item_on_cart' : count,
-        'total' : round(total, 2)
+        'message' : None,
+        'unrelated_attr' : unrelated_att,
+        'menu_json' : json.dumps(MENU),
+        'menu' : menu,
+        'toppings' : toppings,
+        'sub_add_on' : sub_add_on
         }
-        return render(request, 'orders/checkout.html', contect)
+        return render(request, 'orders/index.html', contect)
     else:
-        raise Http404("Not logged in")
+        contect = {
+        'message' : None
+        }
+        return HttpResponseRedirect(reverse('login'))
 
 def login_view(request):
     logout(request)
@@ -161,14 +80,16 @@ def login_view(request):
     # Reach via GET request
     else:
         return render(request, "orders/login.html", {"message":None})
-
 def logout_view(request):
-
+    # Resever for save session
     logout(request)
-    return render(request, "orders/login.html", {"message" : "Logged out."})
-
+    contect = {
+    'message' : 'Logged out.'
+    }
+    return render(request, "orders/login.html", contect)
 def signup(request):
-    logout(request)
+    if request.user.username:
+        logout(request)
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
@@ -191,3 +112,24 @@ def signup(request):
         'form' : form
         }
     return render(request, 'orders/signup.html', contect)
+def get_price(request):
+    """Get price from django model"""
+    if request.user.is_authenticated:
+        try:
+            model_name = request.GET["model_name"]
+        except KeyError:
+            return render(request, "orders/error.html", {'message' : "Key Error: No model name"})
+        model_index = menu_class_str.index(model_name)
+        model = menu_class[model_index]
+        attributes = [att for att in model.__dict__.keys() if not att.startswith('_')
+                     and att not in unrelated_att]
+        filter_data = {}
+        for att in attributes:
+            try:
+                filter_data[att] = request.GET[att]
+            except KeyError:
+                return render(request, "orders/error.html", {'message' : f"Key Error: {att}"})
+        price = model.objects.filter(**filter_data)[0].price
+        return HttpResponse(price)
+    else:
+        raise Http404("Not logged in")

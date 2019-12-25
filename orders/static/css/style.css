@@ -11,3 +11,56 @@ body {
    cursor: default;
    color: lightgray;
 }
+
+#username_display {
+  color: Blue;
+}
+
+.header{
+  position: relative;
+  left: 135px;
+}
+
+.option_dropdown {
+  position: absolute;
+  left: 250px;
+  border-radius: 10px;
+  border-width: medium;
+  border-color: lightblue;
+  width: 210px;
+}
+
+.notification {
+  /* background-color: #555; */
+  color: white;
+  text-decoration: none;
+  padding: 15px 26px;
+  position: relative;
+  display: inline-block;
+  border-radius: 2px;
+}
+
+.notification:hover {
+  /* background: red; */
+}
+
+.notification .badge {
+  position: absolute;
+  top: 0px;
+  left: -12px;
+  padding: 5px 10px;
+  border-radius: 50%;
+  background: red;
+  color: white;
+}
+
+#add_on_sub{
+  position: relative;
+  left: 75px;
+}
+
+#sub_add_on_div{
+  margin: 2px 2px 2px 2px;
+  position: relative;
+  left: 133px;
+}

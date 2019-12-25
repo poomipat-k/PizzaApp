@@ -1,166 +1,105 @@
 document.addEventListener('DOMContentLoaded', function(){
-  // Type
-  let type = document.querySelector("#type");
-  // Size
-  let size = document.querySelector("#size");
-  // Topping_option
-  let topping_option = document.querySelector("#topping_option");
-  let topping_dropdown = document.querySelector('#topping_option_dropdown');
-  var price;
-  let checkout = document.querySelector("#checkout");
-  let clear = document.querySelector("#clear");
+  // Get Topping data from django
+  let toppings_json = JSON.parse(document.querySelector("#topping_data").innerText);
+  let topping_option_select = document.querySelector("#PizzaMenu_topping_option");
+  let sub_select = document.querySelector("#SubMenu_name");
+  let sub_add_on = JSON.parse(document.querySelector("#sub_add_on").innerText);
 
-  // Change cart color in navbar when there are item on cart
-  function cart_update(){
-    let cart_nav = document.querySelector("#cart")
-    // True if there are items in the cart
-    if (parseInt(cart_nav.innerHTML) > 0){
-      cart_nav.style.color = "red";
+  update_topping();
+  topping_option_select.addEventListener('change', function(){
+    update_topping()
+  });
 
-      // Add classname inactiveLink to disable checkout link
-      let inactive_checkout = is_inactive(checkout);
-      // Has inactiveClass
-      if (inactive_checkout){
-        checkout.classList.remove("inactiveLink");
-      }
+  update_sub_add_on();
+  sub_select.addEventListener('change', function(){
+    update_sub_add_on();
+  });
 
-      let inactive_clear = is_inactive(clear);
-      if (inactive_clear){
-        clear.classList.remove("inactiveLink");
-      }
-    }
-    // Cart is empty
-    else {
-      cart_nav.style.color = '';
-      let inactive_checkout = is_inactive(checkout);
-      // Does not have inactiveLing class
-      if (!inactive_checkout){
-        checkout.classList.add("inactiveLink");
-      }
+  let all_select = document.querySelectorAll("select");
+  all_select.forEach(function(select){
+    select.addEventListener('change', function(){
+      let result = get_price(this);
+    });
+  });
 
-      // Does not have inactiveLing class
-      let inactive_clear = is_inactive(clear);
-      if (!inactive_clear){
-        clear.classList.add("inactiveLink");
-      }
-    }
-    // Function to check if the element has inactiveLink class
-    function is_inactive(element)
-    {
-      let inactive = false;
-      for (let i of element.classList){
-        if (i == 'inactiveLink'){
-          inactive = true;
+  // Dynamicly add select dropdowns for pizza's topping
+  function update_topping(){
+    let topping_dropdown = document.querySelector("#topping_dropdown");
+    let n = Number(topping_option_select.value);
+    let html = '';
+    if (n > 0){
+      for (let i = 0; i < n; i++){
+        html += `<div style="margin-top:3px; margin-bottom:3px;">
+        <label style="color: #31a62b; position: relative; left: 44px;">Topping ${i+1}</label>
+        <select id="topping${i}" class="option_dropdown" name="topping${i}">`;
+        for (let cell of toppings_json){
+          html += `<option value="${cell}">${cell}</option>`;
+
         }
+        html += `</select><br></div>`;
       }
-      return inactive;
+      topping_dropdown.innerHTML = html;
     }
+    else{
+      topping_dropdown.innerHTML = '';
     }
-
-  cart_update();
-
-  // Dynamics add dropdown selections from user input's topping_option
-  let topping_json = JSON.parse(document.getElementById('topping_json').textContent);
-  topping_json = JSON.parse(topping_json);
-  topping_option.addEventListener("change", function(){
-    html = '';
-    for (let i = 0; i < topping_option.value; i++){
-      html += "<label>" + "Topping " + (i+1) + ": " + "</label>";
-      html += "<select id=" + "topping" + (i+1) + ">";
-      for (let item of topping_json){
-        html += '<option>' + item + '</option>';
-      }
-      html += "</select><br>";
-    }
-    topping_dropdown.innerHTML = html;
-  });
-  // Get pizza price when the page is reloaded
-  get_pizza_price();
-
-  // Get the pizza price when dropdown value is changed
-  let pizza_cart_button = document.querySelector("#pizza_cart");
-  type.addEventListener('change', function(){
-    get_pizza_price();
-  });
-  size.addEventListener('change', function(){
-    get_pizza_price();
-  });
-  topping_option.addEventListener('change', function(){
-    get_pizza_price();
-  });
-  function get_pizza_price()
-  {
-    let request = new XMLHttpRequest();
-    request.onload = function(){
-      price = JSON.parse(request.responseText);
-      pizza_cart_button.innerHTML = "Add to cart: " + price + " dollars";
-    };
-    let selected_type = type.value;
-    let selected_size = size.value;
-    let selected_topping_option = topping_option.value;
-    let url = '/get_pizza_price?t=' + selected_type + '&s=' + selected_size + '&topping=' + selected_topping_option;
-    request.open('GET', url);
-    request.send();
   }
 
-  // Add to cart action
-  pizza_cart_button.addEventListener('click', function(){
-    // Send Ajax request to server to set shopping cart session
-    let request = new XMLHttpRequest();
-    let count;
-    request.onload = function(){
-      count = request.responseText;
-      // Add number of item in vitual shopping cart in navbar
-      let cart = document.querySelector("#cart");
-      if (parseInt(count) === 1){
-        cart.innerHTML = "1 item in Cart";
-        cart_update();
+  function update_sub_add_on(){
+    let sub_add_on_div = document.querySelector("#sub_add_on_div");
+    html = ``;
+    if (sub_select.value.trim() == "Steak + Cheese"){
+      html += `<div class="btn-group" role="group" aria-label="Basic example">`;
+      for (let info of sub_add_on){
+        if (info.name != "Extra Cheese"){
+          html += `<button type="button" class="btn btn-success">+${info.price} ${info.name}</button>`;
+        }
       }
-      else if (parseInt(count) > 1){
-        cart.innerHTML = count + " items in Cart"
-        cart_update();
-      }
-
-    };
-
-    let url = '/add_pizza_to_cart?';
-    let info = {
-      'types' : type.value,
-      'size' : size.value,
-      'topping_option' : topping_option.value,
-      'price' : price,
-      }
-    for (let i = 0; i < topping_option.value; i++){
-      let id_code = "topping" + (i+1);
-      info[id_code] = document.querySelector("#" + id_code).value;
+      html += `</div>`;
     }
-    for (let key in info){
-      url += key + '=' + info[key] + '&';
+    sub_add_on_div.innerHTML = html;
+  }
+
+  function get_price(select_button){
+    // Get django models name from select_button id
+    let model_name = select_button.id.split('_')[0]; // PizzaMenu
+    // Get HTML tags that has id startswith model_name
+    let attribute_select_tag = [];
+    for (let item of all_select){
+      if (item.id.startsWith(model_name)){
+        attribute_select_tag.push(item);
+      }
+    }
+    // Extract attribute name from tags
+    let attr_list = [];
+    for (let tag of attribute_select_tag){
+      let attr_name = '';
+      let tag_id = tag.id.split('_');
+      for (let i = 1; i < tag_id.length; i++){
+        attr_name += tag_id[i] + '_';
+      }
+      attr_name = attr_name.slice(0,-1);
+      attr_list.push(attr_name)
+    }
+    // Prepare data to send to server
+    let attributes = {'model_name' : model_name}
+    for (let att of attr_list){
+      let node = document.querySelector("#" + model_name + '_' + att);
+      attributes[att] = [node.value];
+    }
+    // Make AJAX request to server via GET request to get the price for the item
+    const request = new XMLHttpRequest();
+    let url = "/get_price?";
+    for (let att in attributes){
+      url += att + '=' + attributes[att] + '&';
     }
     url = url.slice(0,-1);
-    request.open('GET', url);
-    request.send();
-
-  });
-
-  // Clear items in Cart
-  let clear_link = document.querySelector("#clear");
-  clear_link.addEventListener("click", function(evt){
-    evt.preventDefault();
-    let request = new XMLHttpRequest();
-    let url = "/clear"
+    // Callback function
     request.onload = function(){
-      let data = request.responseText;
-      if (data.trim() === "success"){
-        // Remove number of item in cart and update the font color
-        let cart = document.querySelector("#cart");
-        cart.innerHTML = "Cart";
-        cart_update();
-      }
-
-    }
-    request.open("GET", url)
-    request.send()
-  });
-
+      alert(JSON.parse(request.responseText));
+      
+    };
+    request.open("GET", url);
+    request.send();
+  }
 });
