@@ -42,18 +42,26 @@ CS Pizza :
 
     {% if item_name == "SubMenu" %}
     <label for="">Add on: </label>
-      <button id="add_on_sub" type="button" class="btn btn-success">+$0.50 Extra cheese</button>
-      <div id="sub_add_on_div" class="">
-      </div>
+      {% for add_on in sub_add_on %}
+        {% if add_on.name != "Extra Cheese" %}
+          <button type="button" class="btn btn-success add_on hidden" data-price="{{add_on.price}}"
+          data-added="false" data-name="{{add_on.name}}">
+          +${{add_on.price}} {{add_on.name}}</button>
+        {% else %}
+          <button type="button" class="btn btn-success add_on" data-price="{{add_on.price}}"
+          data-added="false" data-name="{{add_on.name}}">
+          +${{add_on.price}} {{add_on.name}}</button>
+        {% endif %}
+      {% endfor %}
       <br>
       <div>
-        <button id="{{item_name}}_price" type="button" class="btn btn-primary"></button>
+        <button id="{{item_name}}_price" type="button" class="btn btn-primary add2cart_button" data-price=''></button>
       </div>
     <!-- All but "SubMenu" -->
     {% else %}
     <br>
       <div>
-        <button id="{{item_name}}_price" type="button" class="btn btn-primary"></button>
+        <button id="{{item_name}}_price" type="button" class="btn btn-primary add2cart_button" data-price=''></button>
       </div>
     {% endif %}
     <hr>

@@ -133,6 +133,14 @@ def get_price(request):
             except IndexError:
                 return render(request, "orders/error.html", {'message' : f"IndexError list index out of range: {att}"})
         price = model.objects.filter(**filter_data)[0].price
-        return HttpResponse(price)
+        return HttpResponse(f"{price:.2f}")
     else:
         raise Http404("Not logged in")
+def add2cart(request):
+    if request.user.is_authenticated:
+        if request.method == "POST":
+            pass
+        else:
+            return render(request, "orders/error.html", {'message' : "Wrong request"})
+    else:
+        return render(request, "orders/error.html", {'message': "Please log in"})
