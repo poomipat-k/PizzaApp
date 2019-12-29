@@ -1,4 +1,4 @@
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpResponse, HttpResponseRedirect, Http404, JsonResponse
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
 from .forms import SignUpForm
@@ -139,7 +139,8 @@ def get_price(request):
 def add2cart(request):
     if request.user.is_authenticated:
         if request.method == "POST":
-            pass
+            res = {"success" : True, "Pizza": 55.55}
+            return JsonResponse(res)
         else:
             return render(request, "orders/error.html", {'message' : "Wrong request"})
     else:
