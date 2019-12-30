@@ -6,66 +6,52 @@ class PizzaMenu(models.Model):
     size = models.CharField(max_length=10)
     topping_option = models.IntegerField() # 0(cheese), 1, 2, 3, 5 toppings
     price = models.FloatField()
-
     def __str__(self):
         topping_option_str = str(self.topping_option) + " toppings"
         if self.topping_option == 0:
             topping_option_str = 'cheese'
         return f"{self.id} - {self.type}, {self.size} with {topping_option_str} - ${self.price:.2f}"
-
 class Pizza(PizzaMenu):
     toppings = models.ManyToManyField('Topping', blank=True, related_name="on_pizza")
-
 class Topping(models.Model):
     name = models.CharField(max_length=32)
     def __str__(self):
         return f"{self.id} - {self.name}"
-
-
 class SubMenu(models.Model):
     name = models.CharField(max_length=32)
     size = models.CharField(max_length=10)
     price = models.FloatField()
     def __str__(self):
         return f"{self.id} - {self.name}, {self.size} - ${self.price:.2f}"
-
 class Sub(SubMenu):
     add_on = models.ManyToManyField('SubsAddOn', blank=True, related_name='on_sub')
-
 class SubsAddOn(models.Model):
     name = models.CharField(max_length=32)
     price = models.FloatField()
     def __str__(self):
         return f"{self.name} - ${self.price:.2f}"
-
 class PastaMenu(models.Model):
     name = models.CharField(max_length=32)
     price = models.FloatField()
     def __str__(self):
         return f"{self.id} - {self.name} - ${self.price:.2f}"
-
 class Pasta(PastaMenu):
     pass
-
 class SaladMenu(models.Model):
     name = models.CharField(max_length=32)
     price = models.FloatField()
     def __str__(self):
         return f"{self.id} - {self.name} - ${self.price:.2f}"
-
 class Salad(SaladMenu):
     pass
-
 class DinnerPlatterMenu(models.Model):
     name = models.CharField(max_length=32)
     size = models.CharField(max_length=10)
     price = models.FloatField()
     def __str__(self):
         return f"{self.id} - {self.name}, {self.size} - ${self.price:.2f}"
-
 class DinnerPlatter(DinnerPlatterMenu):
     pass
-
 class Order(models.Model):
     username = models.CharField(max_length=64)
     pizza = models.ManyToManyField(Pizza, blank=True, related_name='ordered')

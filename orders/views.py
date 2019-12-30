@@ -3,7 +3,8 @@ from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
 from .forms import SignUpForm
 from django.urls import reverse
-from .models import PizzaMenu, Topping, SubMenu, SubsAddOn, PastaMenu, SaladMenu, DinnerPlatterMenu
+from .models import PizzaMenu, Pizza, Topping, SubMenu, Sub, SubsAddOn, PastaMenu, Pasta
+from .models import SaladMenu, Salad, DinnerPlatterMenu, DinnerPlatter, Order, CartSession
 import json
 from urllib.parse import unquote, unquote_plus
 
@@ -41,7 +42,7 @@ def generate_menu():
         # Subs add on variable
         sub_add_on = []
         for item in SubsAddOn.objects.all():
-            sub_add_on.append({'name' : item.name, 'price' : item.price})
+            sub_add_on.append({'name' : item.name, 'price' : round(item.price, 2)})
     return menu_data, toppings, sub_add_on
 # Generate menu data
 MENU = generate_menu()
@@ -139,8 +140,44 @@ def get_price(request):
 def add2cart(request):
     if request.user.is_authenticated:
         if request.method == "POST":
-            res = {"success" : True, "Pizza": 55.55}
-            return JsonResponse(res)
+            try:
+                model_name = request.POST['model_name']
+            except KeyError:
+                return render(request, "orders/error.html", {"message" : "Key error: model_name"})
+            model_index = menu_class_str.index(model_name)
+            model = menu_class[model_index]
+            # Get attribute
+            attr = [att for att in model.__dict__.keys() if not att.startswith('_')
+                         and att not in unrelated_att]
+            # Get price from backend models to ensure the price
+            data = {}
+            for att in attr:
+                try:
+                    data[att] = request.POST[att]
+                except KeyError:
+                    return render(request, "orders/error.html", {'message' : f"Key Error: {att}"})
+            try:
+                price = model.objects.filter(**data)[0].price
+            except IndexError:
+                return render(request, "orders/error.html", {'message' : f"IndexError: Item not in Menu"})
+            # Get username
+            username = request.user.username
+            # SubMenu model, add addon data to 'data' variable
+            if (model_name == "SubMenu"):
+                # Add additional cost to total price, $0.50 per add on
+                data['addon'] = sorted(list(set(json.loads(request.POST['addon']))))
+                price += round(0.5 * len(data['addon']), 2)
+
+            # PizzaMenu model, add toppings data to 'data' variable
+            if (model_name == "PizzaMenu"):
+                topping_option = int(data['topping_option'])
+                toppings = []
+                for i in range(topping_option):
+                    toppings.append(request.POST[f"topping{i+1}"])
+                data['toppings'] = toppings
+                if len(toppings) != topping_option:
+                    return render(request, 'orders/error.html', {'message' : 'Topping quantity not correct.'})
+            return JsonResponse(data, safe=False)
         else:
             return render(request, "orders/error.html", {'message' : "Wrong request"})
     else:

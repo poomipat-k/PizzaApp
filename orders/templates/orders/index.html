@@ -10,6 +10,7 @@ CS Pizza :
 <!-- {{ topping_json | json_script:"topping_json" }} -->
 <div id="show_menu">
   {% for item_name, item_content in menu.items %}
+    <div class="{{item_name}}_div">
     <h2 class="header">{{item_name|slice:"0:-4"}}</h2>
     {% for type, type_data in item_content.items %}
 
@@ -64,6 +65,7 @@ CS Pizza :
         <button id="{{item_name}}_price" type="button" class="btn btn-primary add2cart_button" data-price=''></button>
       </div>
     {% endif %}
+    </div>
     <hr>
   {% endfor %}
 </div>

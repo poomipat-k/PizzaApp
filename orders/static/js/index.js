@@ -5,12 +5,15 @@ let topping_option_select = document.querySelector("#PizzaMenu_topping_option");
 let sub_select_name = document.querySelector("#SubMenu_name");
 let sub_add_on = JSON.parse(document.querySelector("#sub_add_on").innerText);
 var topping_options = document.querySelectorAll(".option_dropdown");
+var sub_add_on_added = [];
 // Vairable to manage topping dropdown disabled/enable
 const MAX_TOPPING_OPTION = 5;
 var selected_toppings = {};
 for (let i = 0; i < MAX_TOPPING_OPTION; i++){
   selected_toppings[`topping${i+1}`] = '';
 }
+
+var SUB_ADD_ON_STATE = [];
 
 update_topping();
 // Dynamicly add Topping select dropdown per topping_option from user input
@@ -86,9 +89,27 @@ all_select.forEach(function(select){
     if (select.id == 'SubMenu_size' || select.id == 'SubMenu_name'){
       document.querySelectorAll(".add_on").forEach(function(button){
         button.classList.remove('added');
+        button.dataset.added = 'false';
+        SUB_ADD_ON_STATE = [];
         });
       }
   });
+});
+
+// Listen to click event on add2cart button then add the item to cart
+document.querySelectorAll(".add2cart_button").forEach(function(button){
+  button.addEventListener("click", function(){
+    // In case sub menu was click include add_on data sending to server too
+    if (button.id.startsWith("SubMenu")){
+      SUB_ADD_ON_STATE = [];
+      for (let ele of document.querySelectorAll(".add_on")){
+        if (ele.dataset.added == 'true'){
+          SUB_ADD_ON_STATE.push(ele.dataset.name);
+        }
+      }
+    }
+    add2cart(this);
+  })
 });
 
 function getCookie(name) {
@@ -120,17 +141,25 @@ $.ajaxSetup({
         }
     }
 });
-urls = "/add2cart";
-$.ajax({
-  url : urls,
-  success : function(result){
-    console.log(result['Pizza']);
-  },
-  type : "POST",
-  data : {
-  }
-});
 
+// Ajax post request function
+function post_request(url, callback, data){
+  $.ajax({
+    url : url,
+    success : callback,
+    type : "POST",
+    data : data
+  });
+}
+// Add item to cart
+function add2cart(button){
+  url = "/add2cart";
+  callback = function(result){
+    console.log(result);
+  }
+  data = get_data_to_submit(button);
+  post_request(url, callback, data);
+}
 
 // Dynamicly add select dropdowns for pizza's topping
 function update_topping(){
@@ -234,13 +263,14 @@ function update_sub_add_on_buttons(){
       let added = false;
       for (let cls of button.classList){
         if (cls == "added"){
-          added = true;
+          added = 'true';
         }
       }
       // Has "added" class
       if (added){
         button.classList.remove('added');
         button.innerText = `+$${button.dataset.price} ${button.dataset.name}`
+        button.dataset.added = 'false';
         // Subtract
         add2cart.dataset.price = parseFloat(add2cart.dataset.price) - parseFloat(button.dataset.price);
         add2cart.innerText = `+$${Math.round(add2cart.dataset.price * 100) / 100} to Cart`;
@@ -248,10 +278,10 @@ function update_sub_add_on_buttons(){
       else{
         button.classList.add('added');
         button.innerText = `-$${button.dataset.price} ${button.dataset.name}`
+        button.dataset.added = true;
         // Plus
         add2cart.dataset.price = parseFloat(add2cart.dataset.price) + parseFloat(button.dataset.price);
         add2cart.innerText = `+$${Math.round(add2cart.dataset.price * 100) / 100} to Cart`;
-
       }
   });
 });
@@ -272,5 +302,21 @@ function disable_Pizza_add2cart(){
     document.querySelector("#PizzaMenu_price").disabled = true;
   }
 }
-
+// Get data of the item that was click to add to cart
+function get_data_to_submit(button){
+  let item_name = button.id.split("_")[0];
+  let attr_tag = document.querySelectorAll(`.${item_name}_div .option_dropdown`);
+  let data = {
+    'model_name' : item_name,
+  };
+  for (let tag of attr_tag){
+    let key = tag.id.replace(`${item_name}_`,``);
+    let value = tag.value;
+    data[key] = value;
+  }
+  // Additional infomation for SubMenu model
+  // Add on data
+  data['addon'] = JSON.stringify(SUB_ADD_ON_STATE);
+  return data;
+}
 });
