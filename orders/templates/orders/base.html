@@ -28,12 +28,11 @@
               <li class="nav-item dropdown">
                 <a id="cart" class="nav-link dropdown-toggle notification" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   <span>Cart</span>
-                  <span class="badge">3</span>
+                  <span id="cart_count"class="badge">{% if cart_count %}{{cart_count}}{% endif %}</span>
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                  <a id="checkout" class="dropdown-item" href="">Check out</a>
-
-                  <a id="clear" class="dropdown-item" href="">Clear</a>
+                  <a id="checkout" class="dropdown-item" href="{% url 'checkout' %}">Check out</a>
+                  <a id="clear_cart_link" class="dropdown-item" href="{% url 'clear_cart' %}">Clear</a>
                 </div>
               </li>
               <span id="username_display" class="navbar-text">

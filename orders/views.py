@@ -16,7 +16,12 @@ unrelated_att = ['DoesNotExist', 'MultipleObjectsReturned',
 'sub', 'on_sub', 'pasta', 'salad', 'dinnerplatter']
 menu_class = [PizzaMenu, SubMenu, PastaMenu, SaladMenu, DinnerPlatterMenu]
 menu_class_str = ['PizzaMenu', 'SubMenu', 'PastaMenu', 'SaladMenu', "DinnerPlatterMenu"]
-
+# Cart session data structure
+def new_cart():
+    init_cart = {}
+    for item in menu_class_str:
+        init_cart[item[:-4]] = []
+    return init_cart
 def generate_menu():
     """Return Menu, Topping, SubsAddOn"""
     # For Menu
@@ -52,6 +57,13 @@ def index(request):
         menu = MENU[0]
         toppings = MENU[1]
         sub_add_on = MENU[2]
+        # Count how many item in cart
+        cart_item_count = 0
+        try:
+            for k in request.session['cart'].keys():
+                cart_item_count += len(request.session['cart'][k])
+        except KeyError:
+            pass
         # Store all info in contect, prepare to pass to html page
         contect = {
         'message' : None,
@@ -59,7 +71,8 @@ def index(request):
         'menu_json' : json.dumps(MENU),
         'menu' : menu,
         'toppings' : toppings,
-        'sub_add_on' : sub_add_on
+        'sub_add_on' : sub_add_on,
+        'cart_count' : cart_item_count
         }
         return render(request, 'orders/index.html', contect)
     else:
@@ -69,6 +82,29 @@ def index(request):
         return HttpResponseRedirect(reverse('login'))
 
 def login_view(request):
+    if request.user.is_authenticated:
+        """Save logged in user's session data"""
+        # Push session data to database before log a userout
+        username = request.user.username
+        # No cart session of the user in database
+        if (len(CartSession.objects.filter(username=username)) == 0 ):
+            try:
+                cart_session_data = CartSession(username=username, cart_session=json.dumps(request.session['cart']))
+                cart_session_data.save()
+            except KeyError:
+                pass
+        # Cart session data of this user already exist in the database
+        else:
+            # Error check if one user has many cart session
+            if len(CartSession.objects.filter(username=username)) > 1:
+                return render(request, 'orders/error.html', {'message' : 'More than one cart session exist in database'})
+            try:
+                c = CartSession.objects.filter(username=username)[0]
+                c.cart_session = json.dumps(request.session['cart'])
+                c.save()
+            except KeyError:
+                pass
+    # Logout request
     logout(request)
     if request.method == 'POST':
         username = request.POST["username"]
@@ -76,6 +112,15 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
+            # Initialize cart session
+            request.session['cart'] = new_cart()
+            # Pull cart session data from database
+            try:
+                fetched_session = CartSession.objects.filter(username=request.user.username)[0]
+                request.session['cart'] = json.loads(fetched_session.cart_session)
+            except IndexError:
+                # Error catch when user has no cart session in database
+                pass
             return HttpResponseRedirect(reverse("index"))
         else:
             return render(request, "orders/login.html", {"message" : "Invalid credential"})
@@ -83,14 +128,56 @@ def login_view(request):
     else:
         return render(request, "orders/login.html", {"message":None})
 def logout_view(request):
-    # Resever for save session
+    # Push session data to database before log a userout
+    username = request.user.username
+    # No cart session of the user in database
+    if (len(CartSession.objects.filter(username=username)) == 0 ):
+        try:
+            cart_session_data = CartSession(username=username, cart_session=json.dumps(request.session['cart']))
+            cart_session_data.save()
+        except KeyError:
+            pass
+    # Cart session data of this user already exist in the database
+    else:
+        # Error check if one user has many cart session
+        if len(CartSession.objects.filter(username=username)) > 1:
+            return render(request, 'orders/error.html', {'message' : 'More than one cart session exist in database'})
+        try:
+            c = CartSession.objects.filter(username=username)[0]
+            c.cart_session = json.dumps(request.session['cart'])
+            c.save()
+        except KeyError:
+            pass
     logout(request)
     contect = {
     'message' : 'Logged out.'
     }
     return render(request, "orders/login.html", contect)
 def signup(request):
-    if request.user.username:
+    if request.user.is_authenticated:
+        if request.user.is_authenticated:
+            """Save logged in user's session data"""
+            # Push session data to database before log a userout
+            username = request.user.username
+            # No cart session of the user in database
+            if (len(CartSession.objects.filter(username=username)) == 0 ):
+                try:
+                    cart_session_data = CartSession(username=username, cart_session=json.dumps(request.session['cart']))
+                    cart_session_data.save()
+                except KeyError:
+                    pass
+            # Cart session data of this user already exist in the database
+            else:
+                # Error check if one user has many cart session
+                if len(CartSession.objects.filter(username=username)) > 1:
+                    return render(request, 'orders/error.html', {'message' : 'More than one cart session exist in database'})
+                try:
+                    c = CartSession.objects.filter(username=username)[0]
+                    c.cart_session = json.dumps(request.session['cart'])
+                    c.save()
+                except KeyError:
+                    pass
+        # Logout request
         logout(request)
     if request.method == 'POST':
         form = SignUpForm(request.POST)
@@ -177,8 +264,55 @@ def add2cart(request):
                 data['toppings'] = toppings
                 if len(toppings) != topping_option:
                     return render(request, 'orders/error.html', {'message' : 'Topping quantity not correct.'})
-            return JsonResponse(data, safe=False)
+            # Append model_name in data
+            data['model_name'] = model_name
+            # Append price in model
+            data['price'] = price
+            # Add data to cart session
+            if 'cart' not in request.session:
+                # Initialize a cart data
+                request.session['cart'] = new_cart()
+                request.session.modified = True
+                # Add data to cart
+                data_to_session = {k:v for k,v in data.items() if k != "model_name"}
+                request.session['cart'][model_name[:-4]].append(data_to_session)
+                # Save nested data structure in session
+                request.session.modified = True
+
+            # Cart session already exist
+            else:
+                data_to_session = {k:v for k,v in data.items() if k != "model_name"}
+                request.session['cart'][model_name[:-4]].append(data_to_session)
+                # Save nested data structure in session
+                request.session.modified = True
+            # Count how many item in cart
+            cart_item_count = 0
+            try:
+                for k in request.session['cart'].keys():
+                    cart_item_count += len(request.session['cart'][k])
+            except KeyError:
+                pass
+
+            return JsonResponse(cart_item_count, safe=False)
         else:
             return render(request, "orders/error.html", {'message' : "Wrong request"})
+    # User not logged in
     else:
         return render(request, "orders/error.html", {'message': "Please log in"})
+def clear_cart(request):
+    request.session['cart'] = new_cart()
+    # response = {'success' : True}
+    # return JsonResponse(response)
+    return HttpResponseRedirect(reverse("index"))
+def checkout(request):
+    # Count how many item in cart
+    cart_item_count = 0
+    try:
+        for k in request.session['cart'].keys():
+            cart_item_count += len(request.session['cart'][k])
+    except KeyError:
+        pass
+    contect = {
+    'cart_count' : cart_item_count
+    }
+    return render(request, "orders/checkout.html", contect)

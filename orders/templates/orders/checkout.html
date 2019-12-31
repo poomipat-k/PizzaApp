@@ -6,16 +6,16 @@ BB Pizza : Check Out
 
 {% block body %}
   <!-- Nav bar -->
-  <h1>Check Out: {{item_on_cart}} item(s)</h1>
+  <h1>Check out: {{cart_count}} item(s)</h1>
 
-  <div id="content">
-  </div>
-  <div id="total_div">
 
-  </div>
 
-  {{ data | json_script:"data" }}
-  {{ total | json_script:"total" }}
+
+
+
+
+
+
   {% load static %}
   <script type="text/javascript" src="{% static 'js/checkout.js'%}"></script>
 

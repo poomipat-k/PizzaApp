@@ -111,6 +111,12 @@ document.querySelectorAll(".add2cart_button").forEach(function(button){
     add2cart(this);
   })
 });
+// Clear shopping cart functionality
+document.querySelector("#clear_cart_link").addEventListener('click', function(e){
+  e.preventDefault();
+  clear_cart();
+})
+toggle_check_out();
 
 function getCookie(name) {
 var cookieValue = null;
@@ -141,7 +147,6 @@ $.ajaxSetup({
         }
     }
 });
-
 // Ajax post request function
 function post_request(url, callback, data){
   $.ajax({
@@ -156,11 +161,12 @@ function add2cart(button){
   url = "/add2cart";
   callback = function(result){
     console.log(result);
+    document.querySelector("#cart_count").innerText = Number(result);
+    toggle_check_out();
   }
   data = get_data_to_submit(button);
   post_request(url, callback, data);
 }
-
 // Dynamicly add select dropdowns for pizza's topping
 function update_topping(){
   let topping_dropdown = document.querySelector("#topping_dropdown");
@@ -318,5 +324,24 @@ function get_data_to_submit(button){
   // Add on data
   data['addon'] = JSON.stringify(SUB_ADD_ON_STATE);
   return data;
+}
+function clear_cart(){
+  $.ajax({
+    url : "/clear_cart",
+    type : "GET",
+    success : function(result){
+      document.querySelector("#cart_count").innerHTML = '';
+      toggle_check_out();
+    }
+  });
+}
+function toggle_check_out(){
+  let in_cart = document.querySelector("#cart_count").innerText;
+  if (Number(in_cart)){
+    document.querySelector("#checkout").classList.remove("inactiveLink");
+  }
+  else{
+    document.querySelector("#checkout").classList.add("inactiveLink");
+  }
 }
 });
