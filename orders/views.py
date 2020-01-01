@@ -17,6 +17,8 @@ unrelated_att = ['DoesNotExist', 'MultipleObjectsReturned',
 menu_class = [PizzaMenu, SubMenu, PastaMenu, SaladMenu, DinnerPlatterMenu]
 menu_class_str = ['PizzaMenu', 'SubMenu', 'PastaMenu', 'SaladMenu', "DinnerPlatterMenu"]
 # Cart session data structure
+model_classes = [PizzaMenu, Pizza, Topping, SubMenu, Sub, SubsAddOn, PastaMenu, Pasta,
+                 SaladMenu, Salad, DinnerPlatterMenu, DinnerPlatter, Order, CartSession]
 def new_cart():
     init_cart = {}
     for item in menu_class_str:
@@ -252,8 +254,8 @@ def add2cart(request):
             # SubMenu model, add addon data to 'data' variable
             if (model_name == "SubMenu"):
                 # Add additional cost to total price, $0.50 per add on
-                data['addon'] = sorted(list(set(json.loads(request.POST['addon']))))
-                price += round(0.5 * len(data['addon']), 2)
+                data['add_on'] = sorted(list(set(json.loads(request.POST['add_on']))))
+                price += round(0.5 * len(data['add_on']), 2)
 
             # PizzaMenu model, add toppings data to 'data' variable
             if (model_name == "PizzaMenu"):
@@ -312,7 +314,77 @@ def checkout(request):
             cart_item_count += len(request.session['cart'][k])
     except KeyError:
         pass
+    # Get cart session data
+    cart_data = new_cart()
+    try:
+        cart_data = request.session['cart']
+    except KeyError:
+        pass
+    # Get total price of the items in the cart
+    total = 0
+    try:
+        for item_type in cart_data:
+            for row in cart_data[item_type]:
+                total += row['price']
+    except KeyError:
+        pass
     contect = {
-    'cart_count' : cart_item_count
+    'cart_count' : cart_item_count,
+    'cart_data' : cart_data,
+    'total' : round(total,2)
     }
     return render(request, "orders/checkout.html", contect)
+def place_order(request):
+    if request.user.is_authenticated and request.method == "POST":
+        data = {}
+        username = request.user.username
+        try:
+            data = request.session['cart']
+        except KeyError:
+            pass
+        message = 'init'
+        # If data is not blank
+        if data:
+            # Create order
+            order = Order(username=username)
+            order.save()
+            for key in data.keys():
+                # key = "Pizza"
+                for item in data[key]:
+                    # Normal field attributes
+                    att = {k:v for k,v in item.items() if k != "toppings" and k != "add_on"}
+                    # ManyToManyField attributes
+                    att_list_object = {k:v for k,v in item.items() if k == "toppings" or k == "add_on"}
+                    # Select model
+                    model_item = [m for m in model_classes if m.__name__ == key][0]
+                    # Create object
+                    new_obj = model_item(**att)
+                    new_obj.save()
+                    # Add toppings to Pizza or add ons to Sub
+                    for k, v in att_list_object.items():
+                        for row in v:
+                            # In case k is toppings
+                            if k == 'toppings':
+                                try:
+                                    addition = Topping.objects.filter(name=row)[0]
+                                    addition.save()
+                                except:
+                                    pass
+                            # In case k is add_on
+                            elif k == 'add_on':
+                                try:
+                                    addition = SubsAddOn.objects.filter(name=row)[0]
+                                    addition.save()
+                                except:
+                                    pass
+                            getattr(new_obj, k).add(addition)
+                            new_obj.save()
+                    getattr(order, key.lower()).add(new_obj)
+                    order.save()
+            request.session['cart'] = new_cart()
+            return JsonResponse("Order confirmed", safe=False)
+        # Cart session data is blank
+        else:
+            return JsonResponse("Fail, cart session blank", safe=False)
+    else:
+        return render(request, 'orders/error.html', {'message' : "Not logged in or wrong request method"})

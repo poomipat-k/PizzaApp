@@ -58,7 +58,7 @@ class Order(models.Model):
     sub = models.ManyToManyField(Sub, blank=True, related_name='ordered')
     pasta = models.ManyToManyField(Pasta, blank=True, related_name='ordered')
     salad = models.ManyToManyField(Salad, blank=True, related_name='ordered')
-    platter = models.ManyToManyField(DinnerPlatter, blank=True, related_name='ordered')
+    dinnerplatter = models.ManyToManyField(DinnerPlatter, blank=True, related_name='ordered')
     def sum_price(self, obj):
         this_sum = 0
         if len(obj.all()) > 0:
@@ -71,11 +71,10 @@ class Order(models.Model):
         total_sum += self.sum_price(self.sub)
         total_sum += self.sum_price(self.pasta)
         total_sum += self.sum_price(self.salad)
-        total_sum += self.sum_price(self.platter)
-        return total_sum
+        total_sum += self.sum_price(self.dinnerplatter)
+        return round(total_sum, 2)
     def __str__(self):
         return f"""id: {self.id} - total {self.total()}"""
-
 class CartSession(models.Model):
     username = models.CharField(max_length=150)
     cart_session = models.TextField()

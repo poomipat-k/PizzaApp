@@ -63,3 +63,9 @@ body {
 .added:hover{
   background-color: red;
 }
+#place_order_button{
+  margin-left: 70%;
+}
+td, th {
+  text-align: center;
+}

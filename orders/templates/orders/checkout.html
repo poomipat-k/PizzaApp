@@ -7,15 +7,119 @@ BB Pizza : Check Out
 {% block body %}
   <!-- Nav bar -->
   <h1>Check out: {{cart_count}} item(s)</h1>
+  <ul class="nav">
+    {% for name in cart_data.keys %}
+    <li class="nav-item">
+      <a class="nav-link nav_item" id="{{name}}_nav" href="#{{name}}">{{name}}</a>
+    </li>
+    {% endfor %}
+  </ul>
 
+  <div class="checkout_items">
+    {% for item_name, item_content in cart_data.items %}
+      {% if item_content %}
+        <h2 id="{{item_name}}" style="color:darkblue;">{{item_name}}</h2>
+      {% endif %}
+      <table class="table table-striped table-bordered">
+      {% if item_content %}
+      <thead>
+        <th scope="col">#</th>
+        {% for row in item_content.0 %}
+          <th scope="col">{{row}}</th>
+        {% endfor %}
+        <tbody>
+        {% for row_data in item_content %}
+          <tr>
+            <th scope="row">{{ forloop.counter }}</th>
+            {% for key, value in row_data.items %}
 
+              <!-- Add <pre> tag in array data structure -->
+              {% if key == "toppings" or key == "add_on" %}
+                {% if value %}
+                <td>
+                {% for top in value %}
+                  <pre>{{top}}</pre>
+                {% endfor %}
+                </td>
+                {% else %}
+                  <td>-</td>
+                {% endif %}
 
+              {% else %}
+                <!-- Format price column to 2 decimals -->
+                {% if key == "price" %}
+                  <td>{{ value|floatformat:2 }}</td>
 
+                <!-- For Pizza topping option = 0, change the display to Cheese -->
+                {% elif key == "topping_option" %}
+                  {% if value == '0' %}
+                    <td>Cheese</td>
+                  {% elif value == '5' %}
+                    <td>Special (5 toppings)</td>
+                  {% else %}
+                    <td>{{value}}</td>
+                  {% endif %}
 
+                {% else %}
+                  <td>{{value}}</td>
+                {% endif %}
+              {% endif %}
 
+            {% endfor %}
+            <td><button type="button" class="btn btn-danger">Delete</button></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </thead>
+      </table>
 
+      {% endif %}
+    {% endfor %}
 
+    <ul class="nav">
+      {% for name in cart_data.keys %}
+      <li class="nav-item">
+        <a class="nav-link nav_item" id="{{name}}_nav" href="#{{name}}">{{name}}</a>
+      </li>
+      {% endfor %}
+    </ul>
+    <!-- <button id="place_order_button" type="button" class="btn btn-success btn-lg">
+      Place order: total ${{total|floatformat:2}}
+    </button> -->
+    <!-- Button trigger modal -->
+    <button id="place_order_button" type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#exampleModal">
+      Place order: total ${{total|floatformat:2}}
+    </button>
 
+      <!-- Modal -->
+      <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Purchase confirmation</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              Do you want to purchase?
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-danger" data-dismiss="modal">Cancle</button>
+              <button type="button" class="btn btn-success" data-dismiss="modal" id="purchase_confirm_button">
+                Yes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    <br><br><br>
+
+  </div>
+
+  {{cart_count|json_script:"cart_count_number"}}
+  {{cart_data|json_script:"cart_data"}}
+
+  <script type="text/javascript" src='https://code.jquery.com/jquery-3.4.1.min.js'></script>
   {% load static %}
   <script type="text/javascript" src="{% static 'js/checkout.js'%}"></script>
 
