@@ -13,6 +13,18 @@ class PizzaMenu(models.Model):
         return f"{self.id} - {self.type}, {self.size} with {topping_option_str} - ${self.price:.2f}"
 class Pizza(PizzaMenu):
     toppings = models.ManyToManyField('Topping', blank=True, related_name="on_pizza")
+    def __str__(self):
+        topping_option_str = str(self.topping_option) + " toppings"
+
+        if self.topping_option == 0:
+            topping_option_str = 'cheese'
+            message = f"{self.id} - {self.type}, {self.size} with {topping_option_str} - ${self.price:.2f}"
+        # Has atleast one topping
+        else:
+            message = f"{self.id} - {self.type.capitalize()}, {self.size} with {topping_option_str} - ${self.price:.2f}\nTopping details:\n"
+            for index, topping in enumerate(self.toppings.all()):
+                message += str(index+1) + '. ' + topping.name + '\n';
+        return message
 class Topping(models.Model):
     name = models.CharField(max_length=32)
     def __str__(self):
@@ -25,6 +37,13 @@ class SubMenu(models.Model):
         return f"{self.id} - {self.name}, {self.size} - ${self.price:.2f}"
 class Sub(SubMenu):
     add_on = models.ManyToManyField('SubsAddOn', blank=True, related_name='on_sub')
+    def __str__(self):
+        message = f"{self.id} - {self.name}, {self.size} - ${self.price:.2f}"
+        if len(self.add_on.all()):
+            message += "\nAdd on details:\n"
+        for index, addon in enumerate(self.add_on.all()):
+            message += str(index+1) + '. ' + addon.name + '\n';
+        return message
 class SubsAddOn(models.Model):
     name = models.CharField(max_length=32)
     price = models.FloatField()
@@ -73,8 +92,16 @@ class Order(models.Model):
         total_sum += self.sum_price(self.salad)
         total_sum += self.sum_price(self.dinnerplatter)
         return round(total_sum, 2)
+    def item_count(self):
+        count = 0
+        count += len(self.pizza.all())
+        count += len(self.sub.all())
+        count += len(self.pasta.all())
+        count += len(self.salad.all())
+        count += len(self.dinnerplatter.all())
+        return count
     def __str__(self):
-        return f"""id: {self.id} - total {self.total()}"""
+        return f"""id: {self.id} - {self.item_count()} item(s)-total {self.total()}"""
 class CartSession(models.Model):
     username = models.CharField(max_length=150)
     cart_session = models.TextField()

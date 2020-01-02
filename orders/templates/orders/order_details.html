@@ -1,0 +1,62 @@
+{% extends "orders/base.html" %}
+
+{% block title %}
+CS Pizza : Order details
+{% endblock %}
+
+{% block body %}
+  <h1>Order id {{order.id}}: details</h1>
+  <!-- Pizza -->
+  {% if pizza %}
+    <h2>Pizza</h2>
+    <ol>
+      {% for row in pizza %}
+        <li class="details">Pizza id: {{row}}</li>
+      {% endfor %}
+    </ol>
+    <hr>
+  {% endif %}
+
+  <!-- Sub -->
+  {% if sub %}
+    <h2>Sub</h2>
+    <ol>
+      {% for row in sub %}
+        <li class="details">Sub id: {{row}}</li>
+      {% endfor %}
+    </ol><hr>
+  {% endif %}
+
+
+  <!-- Pasta -->
+  {% if pasta %}
+    <h2>Pasta</h2>
+    <ol>
+      {% for row in pasta %}
+        <li class="details">Pasta id: {{row}}</li>
+      {% endfor %}
+    </ol><hr>
+  {% endif %}
+
+
+  <!-- Salad -->
+  {% if salad %}
+    <h2>Salad</h2>
+    <ol>
+      {% for row in salad %}
+        <li class="details">Salad id: {{row}}</li>
+      {% endfor %}
+    </ol><hr>
+  {% endif %}
+
+  <!-- DinnerPlatter -->
+  {% if dinnerplatter %}
+    <h2>Dinner Platter</h2>
+    <ol>
+      {% for row in dinnerplatter %}
+        <li class="details">Dinner Platter id: {{row}}</li>
+      {% endfor %}
+    </ol><hr>
+  {% endif %}
+
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "orders/base.html" %}
+
+{% block title %}
+CS Pizza : Order view
+{% endblock %}
+
+{% block body %}
+  <h1>All order</h1>
+  <ul>
+    {% for order in order_data %}
+      <li>
+        <a class="order_link" href="{% url 'order_details' order.id %}" title="Click for more details">
+          Order {{order}} , customer: <span style="color: darkblue;">{{order.username}}</span></a>
+      </li>
+    {% endfor %}
+  </ul>
+
+{% endblock %}

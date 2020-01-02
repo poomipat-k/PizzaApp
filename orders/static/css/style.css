@@ -69,3 +69,11 @@ body {
 td, th {
   text-align: center;
 }
+
+.order_link{
+  font-size: 28px;
+}
+
+.details{
+  font-size: 24px;
+}
