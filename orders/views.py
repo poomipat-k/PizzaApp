@@ -3,8 +3,7 @@ from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
 from .forms import SignUpForm
 from django.urls import reverse
-from .models import PizzaMenu, Pizza, Topping, SubMenu, Sub, SubsAddOn, PastaMenu, Pasta
-from .models import SaladMenu, Salad, DinnerPlatterMenu, DinnerPlatter, Order, CartSession
+from .models import *
 import json
 from urllib.parse import unquote, unquote_plus
 
@@ -388,7 +387,7 @@ def place_order(request):
             return JsonResponse("Fail, cart session blank", safe=False)
     else:
         return render(request, 'orders/error.html', {'message' : "Not logged in or wrong request method"})
-def view_order(request):
+def order_view(request):
     if request.user.is_authenticated and request.user.is_staff:
         interested_att = ['pizza','sub','pasta','salad','dinnerplatter']
         order_all = Order.objects.all()
@@ -399,11 +398,20 @@ def view_order(request):
                 cart_item_count += len(request.session['cart'][k])
         except KeyError:
             pass
+        complete_order = []
+        pending_order = []
+        for order in order_all:
+            if order.is_complete:
+                complete_order.append(order)
+            else:
+                pending_order.append(order)
         contect = {
         'order_data' : order_all,
-        'cart_count' : cart_item_count
+        'cart_count' : cart_item_count,
+        'complete_order' : complete_order,
+        'pending_order' : pending_order
         }
-        return render(request, 'orders/view_order.html', contect)
+        return render(request, 'orders/order_view.html', contect)
     else:
         return render(request, 'orders/error.html', {'message':'Can not access to this page'})
 def order_details(request, order_id):
@@ -420,15 +428,40 @@ def order_details(request, order_id):
         except KeyError:
             pass
         contect = {
-        'order' : order,
+        'order_id' : order_id,
         'customer_name' : order.username,
         'pizza' : order.pizza.all(),
         'sub' : order.sub.all(),
         'pasta' : order.pasta.all(),
         'salad' : order.salad.all(),
         'dinnerplatter' : order.dinnerplatter.all(),
-        'cart_count' : cart_item_count
+        'cart_count' : cart_item_count,
+        'is_complete' : order.is_complete
         }
         return render(request, 'orders/order_details.html', contect)
     else:
         return render(request, 'orders/error.html', {'message': "Can not access"})
+
+def change_order_status(request):
+    if request.method == "POST" and request.user.is_authenticated and request.user.is_staff:
+        try:
+            order_id = int(request.POST["order_id"])
+        except KeyError:
+            pass
+        try:
+            order = Order.objects.get(pk=order_id)
+        except Order.DoesNotExist:
+            raise Http404(f"Order id: {order_id} does not exist")
+        try:
+            status = request.POST["status"]
+        except KeyError:
+            pass
+        if status == "complete":
+            order.is_complete = True
+        else:
+            order.is_complete = False
+        order.save()
+        return HttpResponse("Order is complete")
+
+    else:
+        return render(request, 'orders/error.html', {'message' : "Not logged in"})

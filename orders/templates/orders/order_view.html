@@ -1,0 +1,35 @@
+{% extends "orders/base.html" %}
+
+{% block title %}
+CS Pizza : Order view
+{% endblock %}
+
+{% block body %}
+  {% if pending_order %}
+    <h1>Pending orders:</h1>
+    <ol>
+      {% for order in pending_order %}
+      <div class="container">
+          <a href="{% url 'order_details' order.id  %}" class="order_link">
+            <li>
+              {{order}}, customer: {{order.username}}
+            </li>
+          </a>
+      </div>
+      {% endfor %}
+    </ol>
+  {% endif %}
+  <hr>
+
+  {% if complete_order %}
+    <h1>Complete orders:</h1>
+    <ol>
+      <div class="container">
+        {% for order in complete_order %}
+          <a href="{% url 'order_details' order.id %}" class="order_link"><li>{{order}}, customer: {{request.user.username}}</li></a>
+        {% endfor %}
+      </div>
+    </ol>
+  {% endif %}
+
+{% endblock %}

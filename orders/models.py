@@ -78,6 +78,7 @@ class Order(models.Model):
     pasta = models.ManyToManyField(Pasta, blank=True)
     salad = models.ManyToManyField(Salad, blank=True)
     dinnerplatter = models.ManyToManyField(DinnerPlatter, blank=True)
+    is_complete = models.BooleanField(default=False)
     def sum_price(self, obj):
         this_sum = 0
         if len(obj.all()) > 0:

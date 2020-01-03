@@ -5,7 +5,7 @@ CS Pizza : Order details
 {% endblock %}
 
 {% block body %}
-  <h1>Order id {{order.id}}: details</h1>
+  <h1>Order id {{order_id}}: details</h1>
   <span class="row"><h2>Customer: <span style="color: darkblue;">{{order.username}}</span></h2></span>
   <!-- Pizza -->
   {% if pizza %}
@@ -28,7 +28,6 @@ CS Pizza : Order details
     </ol><hr>
   {% endif %}
 
-
   <!-- Pasta -->
   {% if pasta %}
     <h2>Pasta</h2>
@@ -38,7 +37,6 @@ CS Pizza : Order details
       {% endfor %}
     </ol><hr>
   {% endif %}
-
 
   <!-- Salad -->
   {% if salad %}
@@ -59,5 +57,17 @@ CS Pizza : Order details
       {% endfor %}
     </ol><hr>
   {% endif %}
+  <a href="/order_view"><button type="button" class="btn btn-secondary btn-lg">Back</button></a>
+  {% if not is_complete %}
+    <button  id="complete_button" type="button" class="btn btn-success btn-lg">Complete</button>
+  {% else %}
+    <button  id="pending_button" type="button" class="btn btn-danger btn-lg">Change to Pending</button>
+  {% endif %}
+  <br><br><br>
 
+  {{order_id|json_script:"order_id"}}
+  <!-- Jquery -->
+  <script type="text/javascript" src='https://code.jquery.com/jquery-3.4.1.min.js'></script>
+  {% load static %}
+  <script type="text/javascript" src="{% static 'js/order_details.js'%}"></script>
 {% endblock %}
