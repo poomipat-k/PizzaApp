@@ -73,11 +73,11 @@ class DinnerPlatter(DinnerPlatterMenu):
     pass
 class Order(models.Model):
     username = models.CharField(max_length=64)
-    pizza = models.ManyToManyField(Pizza, blank=True, related_name='ordered')
-    sub = models.ManyToManyField(Sub, blank=True, related_name='ordered')
-    pasta = models.ManyToManyField(Pasta, blank=True, related_name='ordered')
-    salad = models.ManyToManyField(Salad, blank=True, related_name='ordered')
-    dinnerplatter = models.ManyToManyField(DinnerPlatter, blank=True, related_name='ordered')
+    pizza = models.ManyToManyField(Pizza, blank=True)
+    sub = models.ManyToManyField(Sub, blank=True)
+    pasta = models.ManyToManyField(Pasta, blank=True)
+    salad = models.ManyToManyField(Salad, blank=True)
+    dinnerplatter = models.ManyToManyField(DinnerPlatter, blank=True)
     def sum_price(self, obj):
         this_sum = 0
         if len(obj.all()) > 0:

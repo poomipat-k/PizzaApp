@@ -389,7 +389,7 @@ def place_order(request):
     else:
         return render(request, 'orders/error.html', {'message' : "Not logged in or wrong request method"})
 def view_order(request):
-    if request.user.is_authenticated and request.user.is_superuser:
+    if request.user.is_authenticated and request.user.is_staff:
         interested_att = ['pizza','sub','pasta','salad','dinnerplatter']
         order_all = Order.objects.all()
         # Count how many item in cart
@@ -407,25 +407,28 @@ def view_order(request):
     else:
         return render(request, 'orders/error.html', {'message':'Can not access to this page'})
 def order_details(request, order_id):
-    try:
-        order = Order.objects.get(pk=order_id)
-    except Order.DoesNotExist:
-        raise Http404("Order does not exist")
-    # Count how many item in cart
-    cart_item_count = 0
-    try:
-        for k in request.session['cart'].keys():
-            cart_item_count += len(request.session['cart'][k])
-    except KeyError:
-        pass
-    contect = {
-    'order' : order,
-    'customer_name' : order.username,
-    'pizza' : order.pizza.all(),
-    'sub' : order.sub.all(),
-    'pasta' : order.pasta.all(),
-    'salad' : order.salad.all(),
-    'dinnerplatter' : order.dinnerplatter.all(),
-    'cart_count' : cart_item_count
-    }
-    return render(request, 'orders/order_details.html', contect)
+    if request.user.is_authenticated and request.user.is_staff:
+        try:
+            order = Order.objects.get(pk=order_id)
+        except Order.DoesNotExist:
+            raise Http404("Order does not exist")
+        # Count how many item in cart
+        cart_item_count = 0
+        try:
+            for k in request.session['cart'].keys():
+                cart_item_count += len(request.session['cart'][k])
+        except KeyError:
+            pass
+        contect = {
+        'order' : order,
+        'customer_name' : order.username,
+        'pizza' : order.pizza.all(),
+        'sub' : order.sub.all(),
+        'pasta' : order.pasta.all(),
+        'salad' : order.salad.all(),
+        'dinnerplatter' : order.dinnerplatter.all(),
+        'cart_count' : cart_item_count
+        }
+        return render(request, 'orders/order_details.html', contect)
+    else:
+        return render(request, 'orders/error.html', {'message': "Can not access"})
