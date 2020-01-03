@@ -1,11 +1,13 @@
 from django.http import HttpResponse, HttpResponseRedirect, Http404, JsonResponse
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 from .forms import SignUpForm
 from django.urls import reverse
 from .models import *
 import json
 from urllib.parse import unquote, unquote_plus
+from django.core.mail import send_mail
 
 # When add class in model.py, you need to manually add data in these three variables
 # 'unrelated_att', 'menu_class', 'menu_class_str'
@@ -415,7 +417,7 @@ def order_view(request):
     else:
         return render(request, 'orders/error.html', {'message':'Can not access to this page'})
 def order_details(request, order_id):
-    if request.user.is_authenticated and request.user.is_staff:
+    if request.user.is_authenticated:
         try:
             order = Order.objects.get(pk=order_id)
         except Order.DoesNotExist:
@@ -458,10 +460,59 @@ def change_order_status(request):
             pass
         if status == "complete":
             order.is_complete = True
-        else:
+            send_mail(
+            'CS Pizza: Order complete',
+            'Thank you very much dude',
+            'kun.gaming001@gmail.com',
+            [User.objects.filter(username=order.username)[0].email],
+            fail_silently=False
+            )
+
+        elif status == "pending":
             order.is_complete = False
+            order.is_complete = True
+            send_mail(
+            'CS Pizza: order status changed back to Pending',
+            'We are so sorry for any inconvenience',
+            'kun.gaming001@gmail.com',
+            [User.objects.filter(username=order.username)[0].email],
+            fail_silently=False
+            )
         order.save()
         return HttpResponse("Order is complete")
 
     else:
         return render(request, 'orders/error.html', {'message' : "Not logged in"})
+def customer_order_view(request):
+    if request.user.is_authenticated:
+        username = request.user.username
+        # Count how many item in cart
+        cart_item_count = 0
+        try:
+            for k in request.session['cart'].keys():
+                cart_item_count += len(request.session['cart'][k])
+        except KeyError:
+            pass
+
+        orders = Order.objects.filter(username=username)
+        complete_order = []
+        pending_order = []
+        message = None
+
+        if len(orders) > 0:
+            for order in orders:
+                if order.is_complete:
+                    complete_order.append(order)
+                else:
+                    pending_order.append(order)
+        else:
+            message = "You have not place any order so far"
+        contect = {
+        'complete_order' : complete_order,
+        'pending_order' : pending_order,
+        'cart_count' : cart_item_count,
+        'message' : message
+        }
+        return render(request, 'orders/customer_order_view.html', contect)
+    else:
+        return render(request, 'orders/error.html', {'message' : 'Not logged in'})

@@ -38,11 +38,15 @@
               <span id="username_display" class="navbar-text">
                 {{request.user.username}}
               </span>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'customer_order_view' %}">My order</a>
+              </li>
               {% if request.user.is_staff %}
                 <li class="nav-item">
-                  <a id="nav_dinnerplatter" class="nav-link" href="{% url 'order_view' %}">View Orders</a>
+                  <a class="nav-link" href="{% url 'order_view' %}">View Orders</a>
                 </li>
               {% endif %}
+
               <li class="nav-item">
                 <a id="nav_dinnerplatter" class="nav-link" href="{% url 'logout' %}">Log out</a>
               </li>

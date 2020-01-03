@@ -119,3 +119,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+# Email settings
+DEFAULT_FROM_EMAIL = os.getenv("m_name") # kun.gaming001
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = os.getenv("m_name")
+EMAIL_HOST_PASSWORD = os.getenv("m_pass")
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True

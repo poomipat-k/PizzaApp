@@ -1,20 +1,24 @@
 {% extends "orders/base.html" %}
 
 {% block title %}
-CS Pizza : Order view
+CS Pizza : {{request.user.username}} order view
 {% endblock %}
 
 {% block body %}
+  <br><br>
+  {% if message %}
+    <h1 style="text-align:center">{{message}}</h1>
+  {% endif %}
   {% if pending_order %}
     <h1>Pending orders:</h1>
     <ol>
       {% for order in pending_order %}
       <div class="container">
-          <a href="{% url 'order_details' order.id  %}" class="order_link">
+        <a href="{% url 'order_details' order.id  %}" class="order_link">
             <li>
-              {{order}}, customer: {{order.username}}
+              {{order}}
             </li>
-          </a>
+        </a>
       </div>
       {% endfor %}
     </ol>
@@ -24,11 +28,15 @@ CS Pizza : Order view
   {% if complete_order %}
     <h1>Complete orders:</h1>
     <ol>
+      {% for order in complete_order %}
       <div class="container">
-        {% for order in complete_order %}
-          <a href="{% url 'order_details' order.id %}" class="order_link"><li>{{order}}, customer: {{order.username}}</li></a>
-        {% endfor %}
+        <a href="{% url 'order_details' order.id  %}" class="order_link">
+            <li>
+              {{order}}
+            </li>
+        </a>
       </div>
+      {% endfor %}
     </ol>
   {% endif %}
 
