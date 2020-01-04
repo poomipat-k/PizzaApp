@@ -470,7 +470,6 @@ def change_order_status(request):
 
         elif status == "pending":
             order.is_complete = False
-            order.is_complete = True
             send_mail(
             'CS Pizza: order status changed back to Pending',
             'We are so sorry for any inconvenience',
